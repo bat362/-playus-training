@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#111116">
+<title>Playus Training Hub</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;background:#111116;color:#fff;touch-action:manipulation}button{font:inherit}
+#home{min-height:100dvh;padding:max(28px,env(safe-area-inset-top)) 20px max(28px,env(safe-area-inset-bottom))}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:1.6px;color:#999}h1{font-size:38px;line-height:.98;margin:8px 0 10px;letter-spacing:-1.5px}.lead{color:#aaa;font-size:14px;line-height:1.45;margin-bottom:25px}
+.card{width:100%;border:0;text-align:left;color:#fff;border-radius:24px;padding:21px;margin:12px 0;position:relative;overflow:hidden;min-height:150px}.react{background:linear-gradient(135deg,#146e69,#10cfc3)}.zig{background:linear-gradient(135deg,#37245d,#6840e3)}.card b{display:block;font-size:29px}.card span{display:block;margin-top:6px;font-size:13px;max-width:75%;opacity:.86}.badge{position:absolute;right:18px;top:18px;background:#0005;border-radius:99px;padding:7px 10px;font-size:11px;font-weight:800}.best{position:absolute;left:21px;bottom:17px;font-size:12px;font-weight:800}
+.game{display:none;position:fixed;inset:0;background:#f5f5f3;color:#111;overflow:hidden}.game.show{display:block}.back{position:absolute;z-index:20;top:max(15px,env(safe-area-inset-top));left:14px;border:0;border-radius:99px;background:#111d;color:#fff;padding:10px 13px;font-weight:800}
+#reactGame{padding:max(65px,env(safe-area-inset-top)) 20px 22px}.rtitle{text-align:center;font-size:27px;font-weight:900}.rstats{display:flex;justify-content:center;gap:10px;margin:12px}.pill{background:#fff;border-radius:14px;padding:9px 13px;font-size:12px}.rstatus{text-align:center;height:48px;display:flex;align-items:center;justify-content:center;font-weight:800}.board{width:min(88vw,390px);margin:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:22px;padding:8px}.dot{border:0;aspect-ratio:1;border-radius:50%;background:#d6d6d4}.dot.on{background:#10cfc3}.start{position:absolute;bottom:max(25px,env(safe-area-inset-bottom));left:20px;right:20px;border:0;border-radius:17px;background:#111;color:#fff;padding:17px;font-weight:900;font-size:17px}
+#zigGame{background:#49339a;color:#fff}#zc{position:absolute;inset:0;width:100%;height:100%}.zui{position:absolute;inset:0;pointer-events:none}.ztime{text-align:center;margin-top:max(60px,env(safe-area-inset-top));font-weight:800}.zscore{text-align:center;font-size:55px;font-weight:900;margin-top:10px}.zpanel{pointer-events:auto;position:absolute;left:20px;right:20px;bottom:max(25px,env(safe-area-inset-bottom));background:#171321eb;padding:18px;border-radius:22px;text-align:center}.zpanel h2{margin:0 0 7px}.zpanel p{font-size:13px;color:#ddd;margin:0 0 13px}.zpanel button{width:100%;border:0;border-radius:16px;background:#ffe052;padding:16px;font-weight:900;font-size:17px}.hide{display:none}
+</style></head><body>
+<main id="home"><div class="eyebrow">PLAYUS TRAINING HUB</div><h1>Antrenman<br>Alanı</h1><div class="lead">Playus denemeni harcamadan önce mekaniği çalış. Oyun seç:</div>
+<button class="card react" onclick="openReact()"><div class="badge">REACTION</div><b>React</b><span>3×3 hedef · 5 tur · milisaniye reaksiyon</span><div class="best" id="homeReactBest">En iyi: —</div></button>
+<button class="card zig" onclick="openZig()"><div class="badge">TIMING</div><b>Zig</b><span>Tek dokunuşla yön değiştir · 60 saniye</span><div class="best" id="homeZigBest">En iyi: 0</div></button>
+</main>
+
+<section class="game" id="reactGame"><button class="back" onclick="goHome()">← Oyunlar</button><div class="rtitle">React</div>
+<div class="rstats"><div class="pill" id="rr">0/5</div><div class="pill" id="rl">Son: —</div><div class="pill" id="rb">En iyi: —</div></div>
+<div class="rstatus" id="rs">Başlamaya hazır.</div><div class="board" id="rboard"></div><button class="start" id="rstart">BAŞLA</button></section>
+
+<section class="game" id="zigGame"><canvas id="zc"></canvas><button class="back" onclick="goHome()">← Oyunlar</button>
+<div class="zui"><div class="ztime" id="zt">60.0 sn</div><div class="zscore" id="zs">0</div>
+<div class="zpanel" id="zp"><h2 id="zh">Zig</h2><p id="zi">Her dokunuş yönü değiştirir. Sarı yolun üzerinde kal.</p><button id="zb">BAŞLA</button></div></div></section>
+
+<script>
+const home=document.getElementById('home'),RG=document.getElementById('reactGame'),ZG=document.getElementById('zigGame');
+function goHome(){RG.classList.remove('show');ZG.classList.remove('show');home.style.display='block';stopZig();updateHome()}
+function openReact(){home.style.display='none';RG.classList.add('show')}
+function openZig(){home.style.display='none';ZG.classList.add('show');resizeZ();resetZ();drawZ()}
+function updateHome(){let r=+(localStorage.getItem('hubReactBest')||0),z=+(localStorage.getItem('hubZigBest')||0);document.getElementById('homeReactBest').textContent='En iyi: '+(r?Math.round(r)+' ms':'—');document.getElementById('homeZigBest').textContent='En iyi: '+z} updateHome();
+
+/* REACT */
+const board=document.getElementById('rboard'),rr=document.getElementById('rr'),rl=document.getElementById('rl'),rb=document.getElementById('rb'),rs=document.getElementById('rs'),rstart=document.getElementById('rstart');
+let dots=[],rRun=false,rArmed=false,rActive=-1,rShown=0,rTimer,rScores=[];
+for(let i=0;i<9;i++){let b=document.createElement('button');b.className='dot';b.onclick=()=>rHit(i);board.appendChild(b);dots.push(b)}
+function rBest(){return +(localStorage.getItem('hubReactBest')||0)}
+function rUI(){let b=rBest();rb.textContent='En iyi: '+(b?Math.round(b)+' ms':'—');rr.textContent=rScores.length+'/5'}
+function rClear(){dots.forEach(d=>d.classList.remove('on'));rActive=-1}
+function rNext(){rClear();rArmed=false;rs.textContent='Hazır ol…';rTimer=setTimeout(()=>{rActive=Math.floor(Math.random()*9);dots[rActive].classList.add('on');rShown=performance.now();rArmed=true;rs.textContent='ŞİMDİ!'},1200+Math.random()*2800)}
+function rBegin(){rScores=[];rRun=true;rUI();rstart.disabled=true;rstart.textContent='DEVAM EDİYOR';rNext()}
+function rHit(i){if(!rRun)return;if(!rArmed||i!==rActive){clearTimeout(rTimer);rClear();rArmed=false;rs.textContent='Erken / yanlış';setTimeout(rNext,600);return}let ms=performance.now()-rShown;rArmed=false;rClear();rScores.push(ms);rl.textContent='Son: '+Math.round(ms)+' ms';let b=rBest();if(!b||ms<b)localStorage.setItem('hubReactBest',ms);rUI();if(rScores.length>=5){let avg=rScores.reduce((a,b)=>a+b,0)/5;rs.textContent='Ortalama: '+Math.round(avg)+' ms';rRun=false;rstart.disabled=false;rstart.textContent='TEKRAR OYNA';updateHome()}else setTimeout(rNext,500)}
+rstart.onclick=rBegin;rUI();
+
+/* ZIG */
+const zc=document.getElementById('zc'),cx=zc.getContext('2d'),zt=document.getElementById('zt'),zs=document.getElementById('zs'),zp=document.getElementById('zp'),zh=document.getElementById('zh'),zi=document.getElementById('zi'),zb=document.getElementById('zb');
+let W,H,D,zrun=false,zlast=0,zt0=0,zscore=0,zdir=1,zscroll=0,zpassed=0,road=[],ball={x:0,y:0};const RW=92,BR=9,SY=72,SX=72;
+function resizeZ(){D=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;zc.width=W*D;zc.height=H*D;cx.setTransform(D,0,0,D,0,0)}
+function genRoad(){road=[];let x=W/2,y=H*.72,lastD=1;road.push({x,y});for(let i=1;i<220;i++){let d=Math.random()<.82?-lastD:lastD,nx=x+d*SX;if(nx<W*.23||nx>W*.77){d=-d;nx=x+d*SX}x=nx;y-=SY;lastD=d;road.push({x,y})}}
+function pd(px,py,a,b){let vx=b.x-a.x,vy=b.y-a.y,wx=px-a.x,wy=py-a.y,q=Math.max(0,Math.min(1,(wx*vx+wy*vy)/(vx*vx+vy*vy)));return Math.hypot(px-(a.x+q*vx),py-(a.y+q*vy))}
+function near(){let md=1e9,ix=0;for(let i=Math.max(0,zpassed-3);i<Math.min(road.length-1,zpassed+8);i++){let d=pd(ball.x,ball.y-zscroll,road[i],road[i+1]);if(d<md){md=d;ix=i}}return{d:md,i:ix}}
+function resetZ(){genRoad();zscroll=0;zscore=0;zpassed=0;zdir=1;ball.x=road[0].x;ball.y=H*.72;zs.textContent='0';zt.textContent='60.0 sn'}
+function drawZ(){let g=cx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#302742');g.addColorStop(1,'#6840e3');cx.fillStyle=g;cx.fillRect(0,0,W,H);cx.save();cx.translate(0,zscroll);cx.lineJoin='miter';cx.strokeStyle='#947515';cx.lineWidth=RW+15;cx.beginPath();road.forEach((p,i)=>i?cx.lineTo(p.x,p.y):cx.moveTo(p.x,p.y));cx.stroke();cx.strokeStyle='#ffe052';cx.lineWidth=RW;cx.stroke();cx.restore();cx.fillStyle='#17131c';cx.beginPath();cx.arc(ball.x,ball.y,BR,0,Math.PI*2);cx.fill()}
+function startZ(){resetZ();zrun=true;zp.classList.add('hide');zt0=performance.now();zlast=zt0;requestAnimationFrame(loopZ)}
+function stopZig(){zrun=false}
+function endZ(ok){zrun=false;let b=+(localStorage.getItem('hubZigBest')||0);if(zscore>b){b=zscore;localStorage.setItem('hubZigBest',b)}zh.textContent=ok?'Süre Bitti':'Yoldan Düştün';zi.innerHTML='<b>'+zscore+' puan</b> · En iyi: '+b;zb.textContent='TEKRAR OYNA';zp.classList.remove('hide');updateHome()}
+function loopZ(ts){if(!zrun)return;let dt=Math.min(.03,(ts-zlast)/1000||0);zlast=ts;let e=(ts-zt0)/1000,left=Math.max(0,60-e),v=112+Math.min(38,e*.65);zt.textContent=left.toFixed(1)+' sn';zscroll+=v*dt;ball.x+=zdir*v*dt;let n=near();if(n.i>zpassed){zscore+=n.i-zpassed;zpassed=n.i;zs.textContent=zscore}if(e>.55&&n.d>RW/2-BR*.55){drawZ();endZ(false);return}if(left<=0){drawZ();endZ(true);return}drawZ();requestAnimationFrame(loopZ)}
+zc.addEventListener('touchstart',e=>{e.preventDefault();if(zrun)zdir=-zdir},{passive:false});zc.addEventListener('mousedown',()=>{if(zrun)zdir=-zdir});zb.onclick=startZ;addEventListener('resize',()=>{if(ZG.classList.contains('show')){resizeZ();resetZ();drawZ()}});
+</script></body></html>
